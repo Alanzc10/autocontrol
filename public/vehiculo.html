@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>AutoControl — Vehículo</title>
+  <style>
+    :root{
+      --blue:#3b82f6;--blue-dk:#1d4ed8;--gold:#f59e0b;
+      --green:#10b981;--red:#ef4444;--orange:#f97316;
+      --purple:#8b5cf6;--slate:#64748b;
+      --ink:#0f172a;--ink2:#1e293b;--mist:#f8fafc;--white:#ffffff;
+      --card-sh:0 4px 24px rgba(15,23,42,.1);--radius:16px;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:var(--mist);color:var(--ink);min-height:100vh;padding-bottom:40px;-webkit-font-smoothing:antialiased}
+
+    /* ── Header ── */
+    .app-header{background:linear-gradient(135deg,var(--ink),var(--ink2));position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(15,23,42,.3)}
+    .header-top{display:flex;justify-content:space-between;align-items:center;padding:0 20px;height:56px}
+    .logo{font-size:1.1rem;font-weight:800;color:#fff}.logo span{color:var(--gold)}
+    .header-right{display:flex;gap:8px}
+    .hdr-btn{padding:6px 14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:20px;color:#fff;font-family:'Inter',sans-serif;font-size:.74rem;font-weight:600;cursor:pointer;transition:background .2s;text-decoration:none}
+    .hdr-btn:hover{background:rgba(255,255,255,.18)}
+
+    /* ── Tab nav ── */
+    .tab-nav{display:flex;gap:2px;overflow-x:auto;padding:0 16px;scrollbar-width:none}
+    .tab-nav::-webkit-scrollbar{display:none}
+    .tab-btn{flex-shrink:0;padding:10px 16px;border:none;background:transparent;color:rgba(255,255,255,.45);font-family:'Inter',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+    .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+    .tab-btn:hover:not(.active){color:rgba(255,255,255,.8)}
+
+    /* ── Panels ── */
+    .tab-panel{display:none;padding:20px;max-width:900px;margin:0 auto}
+    .tab-panel.active{display:block}
+
+    /* ── Ficha hero ── */
+    .ficha-hero{background:linear-gradient(135deg,var(--ink),var(--ink2));border-radius:var(--radius);overflow:hidden;margin-bottom:20px;display:flex;gap:0}
+    .ficha-foto{width:220px;min-height:160px;flex-shrink:0;object-fit:cover;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:5rem}
+    .ficha-foto img{width:100%;height:100%;object-fit:cover}
+    .ficha-info{padding:20px;flex:1;color:#fff}
+    .ficha-apodo{font-size:1.6rem;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
+    .ficha-modelo{font-size:.9rem;opacity:.65;margin-bottom:14px}
+    .ficha-placa{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:4px 12px;border-radius:8px;font-size:.8rem;font-weight:700;letter-spacing:2px;margin-bottom:14px}
+    .ficha-datos{display:flex;flex-wrap:wrap;gap:16px}
+    .fdato{text-align:center}
+    .fdato-val{font-size:1.2rem;font-weight:700;line-height:1}
+    .fdato-lbl{font-size:.65rem;opacity:.55;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+    @media(max-width:520px){.ficha-hero{flex-direction:column}.ficha-foto{width:100%;height:160px}}
+
+    /* ── Cards ── */
+    .card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--card-sh);margin-bottom:14px}
+    .section-title{font-size:1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+
+    /* ── Stats resumen ── */
+    .mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+    .mstat{background:var(--white);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--card-sh)}
+    .mstat-val{font-size:1.4rem;font-weight:800;line-height:1;margin-bottom:3px}
+    .mstat-lbl{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--slate)}
+    .c-blue{color:var(--blue)}.c-green{color:var(--green)}.c-gold{color:var(--gold)}.c-red{color:var(--red)}.c-orange{color:var(--orange)}.c-purple{color:var(--purple)}
+
+    /* ── Registros lista ── */
+    .reg-item{padding:14px;border-radius:12px;background:var(--mist);margin-bottom:10px;border-left:4px solid var(--blue);transition:background .15s}
+    .reg-item:hover{background:#eff6ff}
+    .reg-item.rep{border-left-color:var(--orange)}
+    .reg-item.rep.terminada{border-left-color:var(--green)}
+    .reg-item.fac{border-left-color:var(--purple)}
+    .reg-item.doc-ok{border-left-color:var(--green)}
+    .reg-item.doc-warn{border-left-color:var(--gold)}
+    .reg-item.doc-danger{border-left-color:var(--red);background:#fff5f5}
+    .reg-item.doc-vencido{border-left-color:var(--red);background:#fee2e2}
+
+    .reg-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;gap:8px}
+    .reg-titulo{font-weight:700;font-size:.9rem}
+    .reg-monto{font-weight:700;font-size:.95rem;color:var(--green);white-space:nowrap}
+    .reg-sub{font-size:.76rem;color:var(--slate);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .reg-actions{display:flex;gap:4px;margin-top:8px}
+
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:700}
+    .badge-ok{background:#dcfce7;color:#166534}
+    .badge-warn{background:#fef3c7;color:#92400e}
+    .badge-danger{background:#fee2e2;color:#991b1b}
+    .badge-process{background:#dbeafe;color:#1e40af}
+    .badge-done{background:#dcfce7;color:#166534}
+
+    /* ── Docs grid ── */
+    .docs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:14px}
+    .doc-card{border-radius:12px;padding:16px;text-align:center;position:relative}
+    .doc-card.ok{background:#f0fdf4;border:2px solid #86efac}
+    .doc-card.warn{background:#fffbeb;border:2px solid #fcd34d}
+    .doc-card.danger{background:#fff5f5;border:2px solid #fca5a5}
+    .doc-card.vencido{background:#fee2e2;border:2px solid var(--red)}
+    .doc-tipo{font-weight:700;font-size:.88rem;margin-bottom:4px}
+    .doc-fecha{font-size:.75rem;color:var(--slate);margin-bottom:6px}
+    .doc-dias{font-size:1.1rem;font-weight:800}
+    .doc-actions{position:absolute;top:8px;right:8px;display:flex;gap:3px}
+
+    /* ── Toolbar ── */
+    .toolbar{display:flex;justify-content:flex-end;margin-bottom:14px}
+
+    /* ── Buttons ── */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 18px;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:.83rem;font-weight:600;cursor:pointer;transition:all .2s}
+    .btn-primary{background:linear-gradient(135deg,var(--blue),var(--blue-dk));color:#fff;box-shadow:0 3px 12px rgba(59,130,246,.3)}
+    .btn-primary:hover{transform:translateY(-1px)}
+    .btn-success{background:linear-gradient(135deg,var(--green),#059669);color:#fff}
+    .btn-danger{background:linear-gradient(135deg,var(--red),#dc2626);color:#fff}
+    .btn-ghost{background:#f1f5f9;color:var(--slate)}
+    .btn-ghost:hover{background:#e2e8f0}
+    .btn-sm{padding:5px 10px;font-size:.74rem;border-radius:7px}
+    .btn-icon{padding:5px;width:28px;height:28px;border-radius:7px;background:#f1f5f9;border:none;cursor:pointer;font-size:.8rem;display:inline-flex;align-items:center;justify-content:center;transition:background .15s}
+    .btn-icon:hover{background:#e2e8f0}
+
+    /* ── Modal ── */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);z-index:900;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+    .modal-overlay.open{display:flex}
+    .modal-box{background:var(--white);border-radius:20px;padding:24px;width:100%;max-width:480px;margin:auto;box-shadow:0 24px 60px rgba(0,0,0,.25);animation:slideUp .25s ease;max-height:90vh;overflow-y:auto}
+    @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    .modal-title{font-size:1.05rem;font-weight:800}
+    .modal-close{background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+    .modal-footer{display:flex;gap:8px;margin-top:18px}
+    .modal-footer .btn{flex:1}
+
+    /* ── Form ── */
+    .form-grid{display:grid;gap:11px}
+    @media(min-width:440px){.form-grid.two{grid-template-columns:1fr 1fr}}
+    .form-group{display:flex;flex-direction:column;gap:4px}
+    .form-group.full{grid-column:1/-1}
+    label{font-size:.71rem;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.5px}
+    input,select,textarea{padding:9px 12px;border:2px solid #e2e8f0;border-radius:9px;font-family:'Inter',sans-serif;font-size:.88rem;color:var(--ink);background:var(--white);transition:border-color .2s;width:100%;outline:none}
+    input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    textarea{resize:vertical;min-height:65px}
+
+    /* ── Toast ── */
+    .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 20px;border-radius:28px;font-size:.83rem;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,.2);opacity:0;transition:all .3s;pointer-events:none;z-index:1000;white-space:nowrap}
+    .toast.success{background:#065f46}.toast.error{background:#991b1b}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    .empty-state{text-align:center;padding:36px 20px;color:var(--slate)}
+    .loading-spinner{width:30px;height:30px;border:3px solid #e2e8f0;border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:20px auto}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+  <div class="header-top">
+    <div class="logo">🚗 Auto<span>Control</span></div>
+    <div class="header-right">
+      <a href="/" class="hdr-btn">← Vehículos</a>
+    </div>
+  </div>
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="resumen">📊 Resumen</button>
+    <button class="tab-btn" data-tab="mantenimiento">🔧 Mantenimiento</button>
+    <button class="tab-btn" data-tab="reparaciones">💥 Reparaciones</button>
+    <button class="tab-btn" data-tab="facturas">🧾 Facturas</button>
+    <button class="tab-btn" data-tab="documentos">📄 Documentos</button>
+  </nav>
+</header>
+
+<!-- ═══════════════════════════ RESUMEN ═══════════════════════════ -->
+<div id="tab-resumen" class="tab-panel active">
+  <div id="fichaHero"><div class="loading-spinner"></div></div>
+
+  <div class="mini-stats">
+    <div class="mstat"><div class="mstat-val c-blue"   id="rsMant">—</div><div class="mstat-lbl">Mantenimientos</div></div>
+    <div class="mstat"><div class="mstat-val c-orange"  id="rsRep">—</div><div class="mstat-lbl">Reparaciones</div></div>
+    <div class="mstat"><div class="mstat-val c-red"    id="rsGasto">—</div><div class="mstat-lbl">Gasto Total</div></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">📅 Últimos Movimientos</div>
+    <div id="rsUltimos"><div class="loading-spinner"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ MANTENIMIENTO ═══════════════════════════ -->
+<div id="tab-mantenimiento" class="tab-panel">
+  <div class="toolbar">
+    <button class="btn btn-primary" onclick="abrirModal('modalMant')">＋ Nuevo Mantenimiento</button>
+  </div>
+  <div id="listaMant"><div class="loading-spinner"></div></div>
+</div>
+
+<!-- ═══════════════════════════ REPARACIONES ═══════════════════════════ -->
+<div id="tab-reparaciones" class="tab-panel">
+  <div class="toolbar">
+    <button class="btn btn-primary" onclick="abrirModal('modalRep')">＋ Nueva Reparación</button>
+  </div>
+  <div id="listaRep"><div class="loading-spinner"></div></div>
+</div>
+
+<!-- ═══════════════════════════ FACTURAS ═══════════════════════════ -->
+<div id="tab-facturas" class="tab-panel">
+  <div class="toolbar">
+    <button class="btn btn-primary" onclick="abrirModal('modalFac')">＋ Nueva Factura / Gasto</button>
+  </div>
+  <div class="mini-stats" style="margin-bottom:16px;">
+    <div class="mstat"><div class="mstat-val c-purple" id="facTotal">—</div><div class="mstat-lbl">Total Facturas</div></div>
+    <div class="mstat"><div class="mstat-val c-red"    id="facMonto">—</div><div class="mstat-lbl">Monto Total</div></div>
+    <div class="mstat"><div class="mstat-val c-gold"   id="facMes">—</div><div class="mstat-lbl">Este Mes</div></div>
+  </div>
+  <div id="listaFac"><div class="loading-spinner"></div></div>
+</div>
+
+<!-- ═══════════════════════════ DOCUMENTOS ═══════════════════════════ -->
+<div id="tab-documentos" class="tab-panel">
+  <div class="toolbar">
+    <button class="btn btn-primary" onclick="abrirModal('modalDoc')">＋ Nuevo Documento</button>
+  </div>
+  <div id="listaDoc"><div class="loading-spinner"></div></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODALES
+══════════════════════════════════════════ -->
+
+<!-- Modal Mantenimiento -->
+<div id="modalMant" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modalMantTitulo">🔧 Nuevo Mantenimiento</span>
+      <button class="modal-close" onclick="cerrarModal('modalMant')">✕</button>
+    </div>
+    <form id="formMant">
+      <input type="hidden" id="mId">
+      <div class="form-grid two">
+        <div class="form-group full">
+          <label>Tipo de mantenimiento *</label>
+          <select id="mTipo">
+            <option>Cambio de Aceite</option>
+            <option>Cambio de Filtro de Aire</option>
+            <option>Cambio de Filtro de Aceite</option>
+            <option>Cambio de Filtro de Combustible</option>
+            <option>Cambio de Llantas</option>
+            <option>Rotación de Llantas</option>
+            <option>Cambio de Frenos</option>
+            <option>Cambio de Pastillas</option>
+            <option>Alineación y Balanceo</option>
+            <option>Cambio de Batería</option>
+            <option>Cambio de Bujías</option>
+            <option>Revisión General</option>
+            <option>Cambio de Correa de Distribución</option>
+            <option>Cambio de Líquido de Frenos</option>
+            <option>Cambio de Líquido de Dirección</option>
+            <option>Cambio de Refrigerante</option>
+            <option>Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha *</label>
+          <input type="date" id="mFecha" required>
+        </div>
+        <div class="form-group">
+          <label>Kilometraje</label>
+          <input type="number" id="mKm" placeholder="Km al momento" min="0">
+        </div>
+        <div class="form-group">
+          <label>Próximo a los km</label>
+          <input type="number" id="mProxKm" placeholder="Ej: 75000" min="0">
+        </div>
+        <div class="form-group">
+          <label>Próximo fecha (estimada)</label>
+          <input type="date" id="mProxFecha">
+        </div>
+        <div class="form-group">
+          <label>Taller / Lugar</label>
+          <input type="text" id="mTaller" placeholder="Nombre del taller">
+        </div>
+        <div class="form-group">
+          <label>Costo ($)</label>
+          <input type="number" id="mCosto" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group full">
+          <label>Notas</label>
+          <textarea id="mNotas" placeholder="Observaciones, marca del aceite, etc."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+        <button type="button" class="btn btn-ghost" onclick="cerrarModal('modalMant')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Reparación -->
+<div id="modalRep" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modalRepTitulo">💥 Nueva Reparación</span>
+      <button class="modal-close" onclick="cerrarModal('modalRep')">✕</button>
+    </div>
+    <form id="formRep">
+      <input type="hidden" id="rId">
+      <div class="form-grid two">
+        <div class="form-group full">
+          <label>Descripción del daño / trabajo *</label>
+          <textarea id="rDesc" placeholder="Ej: Choque lateral, daño en puerta izquierda..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Fecha inicio *</label>
+          <input type="date" id="rFechaIni" required>
+        </div>
+        <div class="form-group">
+          <label>Fecha fin (si ya terminó)</label>
+          <input type="date" id="rFechaFin">
+        </div>
+        <div class="form-group full">
+          <label>Taller / Mecánico</label>
+          <input type="text" id="rTaller" placeholder="Nombre del taller">
+        </div>
+        <div class="form-group">
+          <label>Costo estimado ($)</label>
+          <input type="number" id="rCostoEst" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Costo final ($)</label>
+          <input type="number" id="rCostoFin" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group full">
+          <label>Estado</label>
+          <select id="rEstado">
+            <option value="en_proceso">🔧 En Proceso</option>
+            <option value="terminada">✅ Terminada</option>
+            <option value="pendiente">⏳ Pendiente</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Notas</label>
+          <textarea id="rNotas" placeholder="Detalles adicionales, seguro, fotos..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+        <button type="button" class="btn btn-ghost" onclick="cerrarModal('modalRep')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Factura -->
+<div id="modalFac" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modalFacTitulo">🧾 Nueva Factura / Gasto</span>
+      <button class="modal-close" onclick="cerrarModal('modalFac')">✕</button>
+    </div>
+    <form id="formFac">
+      <input type="hidden" id="fId">
+      <div class="form-grid two">
+        <div class="form-group full">
+          <label>Concepto *</label>
+          <input type="text" id="fConcepto" required placeholder="Ej: Compra de batería, Factura taller...">
+        </div>
+        <div class="form-group">
+          <label>Fecha *</label>
+          <input type="date" id="fFecha" required>
+        </div>
+        <div class="form-group">
+          <label>Monto ($) *</label>
+          <input type="number" id="fMonto" required placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Categoría</label>
+          <select id="fCategoria">
+            <option value="repuesto">🔩 Repuesto</option>
+            <option value="mano_obra">👨‍🔧 Mano de Obra</option>
+            <option value="combustible">⛽ Combustible</option>
+            <option value="seguro">🛡️ Seguro</option>
+            <option value="impuesto">📋 Impuesto / Tasa</option>
+            <option value="accesorio">🎯 Accesorio</option>
+            <option value="otro">📦 Otro</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Proveedor / Tienda</label>
+          <input type="text" id="fProveedor" placeholder="Nombre del proveedor">
+        </div>
+        <div class="form-group full">
+          <label>Notas</label>
+          <textarea id="fNotas" placeholder="Número de factura, detalles..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+        <button type="button" class="btn btn-ghost" onclick="cerrarModal('modalFac')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Documento -->
+<div id="modalDoc" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modalDocTitulo">📄 Nuevo Documento</span>
+      <button class="modal-close" onclick="cerrarModal('modalDoc')">✕</button>
+    </div>
+    <form id="formDoc">
+      <input type="hidden" id="dId">
+      <div class="form-grid two">
+        <div class="form-group full">
+          <label>Tipo de documento *</label>
+          <select id="dTipo">
+            <option>SOAT</option>
+            <option>Matrícula</option>
+            <option>Revisión Técnica</option>
+            <option>Seguro Todo Riesgo</option>
+            <option>Permiso de Circulación</option>
+            <option>Licencia de Conducir</option>
+            <option>Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Número / Código</label>
+          <input type="text" id="dNumero" placeholder="Número del documento">
+        </div>
+        <div class="form-group">
+          <label>Costo ($)</label>
+          <input type="number" id="dCosto" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Fecha de emisión</label>
+          <input type="date" id="dEmision">
+        </div>
+        <div class="form-group">
+          <label>Fecha de vencimiento *</label>
+          <input type="date" id="dVencimiento" required>
+        </div>
+        <div class="form-group full">
+          <label>Notas</label>
+          <textarea id="dNotas" placeholder="Observaciones..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+        <button type="button" class="btn btn-ghost" onclick="cerrarModal('modalDoc')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script>
+/* ── STATE ── */
+const params = new URLSearchParams(location.search);
+const VID    = parseInt(params.get('id'));
+if (!VID) location.href = '/';
+
+let vehiculo = null;
+let mantenimientos = [], reparaciones = [], facturas = [], documentos = [];
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!VID) return;
+  const hoy = new Date().toISOString().split('T')[0];
+  ['mFecha','rFechaIni','fFecha'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = hoy;
+  });
+  await cargarVehiculo();
+  await Promise.all([ cargarMant(), cargarRep(), cargarFac(), cargarDoc() ]);
+  renderResumen();
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Forms
+  document.getElementById('formMant').addEventListener('submit', guardarMant);
+  document.getElementById('formRep').addEventListener('submit', guardarRep);
+  document.getElementById('formFac').addEventListener('submit', guardarFac);
+  document.getElementById('formDoc').addEventListener('submit', guardarDoc);
+});
+
+/* ── TOAST ── */
+function toast(msg, tipo='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = `toast ${tipo} show`;
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+/* ── MODALES ── */
+function abrirModal(id)  { document.getElementById(id).classList.add('open'); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) cerrarModal(m.id); });
+});
+
+/* ── CARGAR VEHÍCULO ── */
+async function cargarVehiculo() {
+  const r = await fetch(`/api/vehiculos/${VID}`);
+  vehiculo = await r.json();
+  renderHero();
+}
+
+function renderHero() {
+  const v = vehiculo;
+  const estadoBadge = {
+    activo:    '<span class="badge badge-ok" style="font-size:.8rem;padding:4px 10px;">🟢 Activo</span>',
+    en_taller: '<span class="badge badge-process" style="font-size:.8rem;padding:4px 10px;">🔧 En Taller</span>',
+    vendido:   '<span style="background:#f1f5f9;color:#64748b;padding:4px 10px;border-radius:10px;font-size:.8rem;font-weight:700;">📦 Vendido</span>',
+  }[v.estado] || '';
+
+  const fotoHTML = v.foto
+    ? `<img src="${v.foto}" alt="${v.apodo}">`
+    : `<span style="font-size:5rem;">🚘</span>`;
+
+  document.getElementById('fichaHero').innerHTML = `
+    <div class="ficha-hero">
+      <div class="ficha-foto">${fotoHTML}</div>
+      <div class="ficha-info">
+        <div class="ficha-apodo">${v.apodo}</div>
+        <div class="ficha-modelo">${v.marca} ${v.modelo}${v.anio ? ' · ' + v.anio : ''}${v.color ? ' · ' + v.color : ''}</div>
+        ${v.placa ? `<div class="ficha-placa">${v.placa.toUpperCase()}</div>` : ''}
+        <div style="margin-bottom:12px;">${estadoBadge}</div>
+        <div class="ficha-datos">
+          <div class="fdato"><div class="fdato-val">${parseInt(v.kilometraje||0).toLocaleString()}</div><div class="fdato-lbl">km</div></div>
+          ${v.notas ? `<div style="margin-top:8px;font-size:.78rem;opacity:.6;max-width:300px;">${v.notas}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ── RESUMEN ── */
+function renderResumen() {
+  const gastoMant = mantenimientos.reduce((s,m) => s + parseFloat(m.costo||0), 0);
+  const gastoRep  = reparaciones.reduce((s,r) => s + parseFloat(r.costo_final||0), 0);
+  const gastoFac  = facturas.reduce((s,f) => s + parseFloat(f.monto||0), 0);
+  const gastoTotal = gastoMant + gastoRep + gastoFac;
+
+  document.getElementById('rsMant').textContent  = mantenimientos.length;
+  document.getElementById('rsRep').textContent   = reparaciones.length;
+  document.getElementById('rsGasto').textContent = '$' + gastoTotal.toFixed(2);
+
+  // Últimos movimientos (mezcla de todo ordenado por fecha)
+  const eventos = [
+    ...mantenimientos.slice(0,3).map(m => ({ tipo:'mant', fecha:m.fecha, titulo:m.tipo, sub:`${m.taller||'Sin taller'} · $${parseFloat(m.costo||0).toFixed(2)}` })),
+    ...reparaciones.slice(0,3).map(r => ({ tipo:'rep', fecha:r.fecha_inicio, titulo:r.descripcion.slice(0,50), sub:`${r.taller||'Sin taller'} · Estado: ${r.estado}` })),
+    ...facturas.slice(0,3).map(f => ({ tipo:'fac', fecha:f.fecha, titulo:f.concepto, sub:`${f.proveedor||''} · $${parseFloat(f.monto||0).toFixed(2)}` })),
+  ].sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).slice(0,6);
+
+  const el = document.getElementById('rsUltimos');
+  if (!eventos.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:20px;"><p>Aún no hay movimientos registrados</p></div>';
+    return;
+  }
+  const icons = { mant:'🔧', rep:'💥', fac:'🧾' };
+  const colors = { mant:'var(--blue)', rep:'var(--orange)', fac:'var(--purple)' };
+  el.innerHTML = eventos.map(ev => `
+    <div class="reg-item" style="border-left-color:${colors[ev.tipo]};">
+      <div class="reg-top">
+        <div class="reg-titulo">${icons[ev.tipo]} ${ev.titulo}</div>
+        <div style="font-size:.72rem;color:var(--slate);">${fmtFecha(ev.fecha)}</div>
+      </div>
+      <div class="reg-sub">${ev.sub}</div>
+    </div>`).join('');
+}
+
+/* ════════════════════════════════════════
+   MANTENIMIENTO
+════════════════════════════════════════ */
+async function cargarMant() {
+  const r = await fetch(`/api/vehiculos/${VID}/mantenimientos`);
+  mantenimientos = await r.json();
+  renderMant();
+}
+
+function renderMant() {
+  const el = document.getElementById('listaMant');
+  if (!mantenimientos.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin mantenimientos registrados</p><p style="margin-top:6px;font-size:.82rem;">Registra el primer mantenimiento con el botón de arriba</p></div>';
+    return;
+  }
+  el.innerHTML = mantenimientos.map(m => `
+    <div class="reg-item">
+      <div class="reg-top">
+        <div>
+          <div class="reg-titulo">🔧 ${m.tipo}</div>
+          <div class="reg-sub">
+            📅 ${fmtFecha(m.fecha)}
+            ${m.kilometraje ? ` · 🛣️ ${parseInt(m.kilometraje).toLocaleString()} km` : ''}
+            ${m.taller ? ` · 🏪 ${m.taller}` : ''}
+          </div>
+          ${m.notas ? `<div style="font-size:.75rem;color:var(--slate);margin-top:4px;font-style:italic;">📝 ${m.notas}</div>` : ''}
+          ${m.proximo_fecha || m.proximo_km ? `
+            <div style="margin-top:6px;font-size:.74rem;background:#eff6ff;padding:5px 8px;border-radius:6px;color:var(--blue);">
+              ⏭️ Próximo:${m.proximo_fecha?' '+fmtFecha(m.proximo_fecha):''}${m.proximo_km?' · '+parseInt(m.proximo_km).toLocaleString()+' km':''}
+            </div>` : ''}
+        </div>
+        <div class="reg-monto">$${parseFloat(m.costo||0).toFixed(2)}</div>
+      </div>
+      <div class="reg-actions">
+        <button class="btn-icon" onclick="editarMant(${m.id})" title="Editar">✏️</button>
+        <button class="btn-icon" onclick="eliminar('mant',${m.id})" title="Eliminar" style="color:var(--red);">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function limpiarFormMant() {
+  ['mId','mKm','mProxKm','mProxFecha','mTaller','mNotas'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mCosto').value = '';
+  document.getElementById('mTipo').value  = 'Cambio de Aceite';
+  document.getElementById('mFecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('modalMantTitulo').textContent = '🔧 Nuevo Mantenimiento';
+}
+
+function editarMant(id) {
+  const m = mantenimientos.find(x => x.id === id);
+  if (!m) return;
+  document.getElementById('mId').value        = m.id;
+  document.getElementById('mTipo').value      = m.tipo;
+  document.getElementById('mFecha').value     = m.fecha;
+  document.getElementById('mKm').value        = m.kilometraje||'';
+  document.getElementById('mProxKm').value    = m.proximo_km||'';
+  document.getElementById('mProxFecha').value = m.proximo_fecha||'';
+  document.getElementById('mTaller').value    = m.taller||'';
+  document.getElementById('mCosto').value     = m.costo||'';
+  document.getElementById('mNotas').value     = m.notas||'';
+  document.getElementById('modalMantTitulo').textContent = '✏️ Editar Mantenimiento';
+  abrirModal('modalMant');
+}
+
+async function guardarMant(e) {
+  e.preventDefault();
+  const id  = document.getElementById('mId').value;
+  const body = {
+    tipo:          document.getElementById('mTipo').value,
+    fecha:         document.getElementById('mFecha').value,
+    kilometraje:   document.getElementById('mKm').value,
+    proximo_km:    document.getElementById('mProxKm').value,
+    proximo_fecha: document.getElementById('mProxFecha').value,
+    taller:        document.getElementById('mTaller').value,
+    costo:         document.getElementById('mCosto').value,
+    notas:         document.getElementById('mNotas').value,
+  };
+  const url = id ? `/api/vehiculos/${VID}/mantenimientos/${id}` : `/api/vehiculos/${VID}/mantenimientos`;
+  const r   = await fetch(url, { method: id ? 'PUT' : 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  if (r.ok) {
+    toast(id ? '✅ Mantenimiento actualizado' : '✅ Mantenimiento registrado', 'success');
+    cerrarModal('modalMant'); limpiarFormMant();
+    await cargarMant(); await cargarVehiculo(); renderResumen();
+  } else toast('Error guardando', 'error');
+}
+
+/* ════════════════════════════════════════
+   REPARACIONES
+════════════════════════════════════════ */
+async function cargarRep() {
+  const r = await fetch(`/api/vehiculos/${VID}/reparaciones`);
+  reparaciones = await r.json();
+  renderRep();
+}
+
+function renderRep() {
+  const el = document.getElementById('listaRep');
+  if (!reparaciones.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin reparaciones registradas</p></div>';
+    return;
+  }
+  el.innerHTML = reparaciones.map(r => {
+    const clsExtra = r.estado === 'terminada' ? 'terminada' : '';
+    const badgeCls = { en_proceso:'badge-process', terminada:'badge-done', pendiente:'badge-warn' }[r.estado] || 'badge-warn';
+    const badgeTxt = { en_proceso:'🔧 En Proceso', terminada:'✅ Terminada', pendiente:'⏳ Pendiente' }[r.estado] || r.estado;
+    return `
+      <div class="reg-item rep ${clsExtra}">
+        <div class="reg-top">
+          <div>
+            <div class="reg-titulo">💥 ${r.descripcion.slice(0,60)}${r.descripcion.length>60?'...':''}</div>
+            <div class="reg-sub">
+              📅 ${fmtFecha(r.fecha_inicio)}${r.fecha_fin?' → '+fmtFecha(r.fecha_fin):''}
+              ${r.taller ? ` · 🏪 ${r.taller}` : ''}
+              <span class="badge ${badgeCls}">${badgeTxt}</span>
+            </div>
+            ${r.notas ? `<div style="font-size:.74rem;color:var(--slate);margin-top:4px;font-style:italic;">📝 ${r.notas}</div>` : ''}
+            ${r.costo_estimado > 0 ? `<div style="font-size:.74rem;color:var(--slate);margin-top:4px;">Estimado: $${parseFloat(r.costo_estimado).toFixed(2)}</div>` : ''}
+          </div>
+          <div class="reg-monto">$${parseFloat(r.costo_final||0).toFixed(2)}</div>
+        </div>
+        <div class="reg-actions">
+          <button class="btn-icon" onclick="editarRep(${r.id})" title="Editar">✏️</button>
+          <button class="btn-icon" onclick="eliminar('rep',${r.id})" title="Eliminar" style="color:var(--red);">🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function limpiarFormRep() {
+  ['rId','rFechaFin','rTaller','rNotas'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('rDesc').value      = '';
+  document.getElementById('rCostoEst').value  = '';
+  document.getElementById('rCostoFin').value  = '';
+  document.getElementById('rEstado').value    = 'en_proceso';
+  document.getElementById('rFechaIni').value  = new Date().toISOString().split('T')[0];
+  document.getElementById('modalRepTitulo').textContent = '💥 Nueva Reparación';
+}
+
+function editarRep(id) {
+  const r = reparaciones.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('rId').value       = r.id;
+  document.getElementById('rDesc').value     = r.descripcion;
+  document.getElementById('rFechaIni').value = r.fecha_inicio;
+  document.getElementById('rFechaFin').value = r.fecha_fin||'';
+  document.getElementById('rTaller').value   = r.taller||'';
+  document.getElementById('rCostoEst').value = r.costo_estimado||'';
+  document.getElementById('rCostoFin').value = r.costo_final||'';
+  document.getElementById('rEstado').value   = r.estado||'en_proceso';
+  document.getElementById('rNotas').value    = r.notas||'';
+  document.getElementById('modalRepTitulo').textContent = '✏️ Editar Reparación';
+  abrirModal('modalRep');
+}
+
+async function guardarRep(e) {
+  e.preventDefault();
+  const id  = document.getElementById('rId').value;
+  const body = {
+    descripcion:    document.getElementById('rDesc').value,
+    fecha_inicio:   document.getElementById('rFechaIni').value,
+    fecha_fin:      document.getElementById('rFechaFin').value,
+    taller:         document.getElementById('rTaller').value,
+    costo_estimado: document.getElementById('rCostoEst').value,
+    costo_final:    document.getElementById('rCostoFin').value,
+    estado:         document.getElementById('rEstado').value,
+    notas:          document.getElementById('rNotas').value,
+  };
+  const url = id ? `/api/vehiculos/${VID}/reparaciones/${id}` : `/api/vehiculos/${VID}/reparaciones`;
+  const r   = await fetch(url, { method: id ? 'PUT' : 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  if (r.ok) {
+    toast(id ? '✅ Actualizado' : '✅ Reparación registrada', 'success');
+    cerrarModal('modalRep'); limpiarFormRep();
+    await cargarRep(); await cargarVehiculo(); renderResumen();
+  } else toast('Error guardando', 'error');
+}
+
+/* ════════════════════════════════════════
+   FACTURAS
+════════════════════════════════════════ */
+async function cargarFac() {
+  const r = await fetch(`/api/vehiculos/${VID}/facturas`);
+  facturas = await r.json();
+  renderFac();
+}
+
+function renderFac() {
+  const el = document.getElementById('listaFac');
+  const total = facturas.reduce((s,f) => s + parseFloat(f.monto||0), 0);
+  const mes   = facturas.filter(f => f.fecha?.slice(0,7) === new Date().toISOString().slice(0,7))
+                         .reduce((s,f) => s + parseFloat(f.monto||0), 0);
+  document.getElementById('facTotal').textContent = facturas.length;
+  document.getElementById('facMonto').textContent = '$' + total.toFixed(2);
+  document.getElementById('facMes').textContent   = '$' + mes.toFixed(2);
+
+  if (!facturas.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin facturas registradas</p></div>';
+    return;
+  }
+  const catIcons = { repuesto:'🔩', mano_obra:'👨‍🔧', combustible:'⛽', seguro:'🛡️', impuesto:'📋', accesorio:'🎯', otro:'📦' };
+  el.innerHTML = facturas.map(f => `
+    <div class="reg-item fac">
+      <div class="reg-top">
+        <div>
+          <div class="reg-titulo">${catIcons[f.categoria]||'📦'} ${f.concepto}</div>
+          <div class="reg-sub">
+            📅 ${fmtFecha(f.fecha)}
+            ${f.proveedor ? ` · 🏪 ${f.proveedor}` : ''}
+          </div>
+          ${f.notas ? `<div style="font-size:.74rem;color:var(--slate);margin-top:3px;font-style:italic;">📝 ${f.notas}</div>` : ''}
+        </div>
+        <div class="reg-monto">$${parseFloat(f.monto||0).toFixed(2)}</div>
+      </div>
+      <div class="reg-actions">
+        <button class="btn-icon" onclick="editarFac(${f.id})" title="Editar">✏️</button>
+        <button class="btn-icon" onclick="eliminar('fac',${f.id})" title="Eliminar" style="color:var(--red);">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function limpiarFormFac() {
+  ['fId','fProveedor','fNotas'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fConcepto').value  = '';
+  document.getElementById('fMonto').value     = '';
+  document.getElementById('fCategoria').value = 'repuesto';
+  document.getElementById('fFecha').value     = new Date().toISOString().split('T')[0];
+  document.getElementById('modalFacTitulo').textContent = '🧾 Nueva Factura / Gasto';
+}
+
+function editarFac(id) {
+  const f = facturas.find(x => x.id === id);
+  if (!f) return;
+  document.getElementById('fId').value        = f.id;
+  document.getElementById('fConcepto').value  = f.concepto;
+  document.getElementById('fFecha').value     = f.fecha;
+  document.getElementById('fMonto').value     = f.monto;
+  document.getElementById('fCategoria').value = f.categoria||'repuesto';
+  document.getElementById('fProveedor').value = f.proveedor||'';
+  document.getElementById('fNotas').value     = f.notas||'';
+  document.getElementById('modalFacTitulo').textContent = '✏️ Editar Factura';
+  abrirModal('modalFac');
+}
+
+async function guardarFac(e) {
+  e.preventDefault();
+  const id  = document.getElementById('fId').value;
+  const body = {
+    concepto:   document.getElementById('fConcepto').value,
+    fecha:      document.getElementById('fFecha').value,
+    monto:      document.getElementById('fMonto').value,
+    categoria:  document.getElementById('fCategoria').value,
+    proveedor:  document.getElementById('fProveedor').value,
+    notas:      document.getElementById('fNotas').value,
+  };
+  const url = id ? `/api/vehiculos/${VID}/facturas/${id}` : `/api/vehiculos/${VID}/facturas`;
+  const r   = await fetch(url, { method: id ? 'PUT' : 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  if (r.ok) {
+    toast(id ? '✅ Actualizado' : '✅ Factura registrada', 'success');
+    cerrarModal('modalFac'); limpiarFormFac();
+    await cargarFac(); renderResumen();
+  } else toast('Error guardando', 'error');
+}
+
+/* ════════════════════════════════════════
+   DOCUMENTOS
+════════════════════════════════════════ */
+async function cargarDoc() {
+  const r = await fetch(`/api/vehiculos/${VID}/documentos`);
+  documentos = await r.json();
+  renderDoc();
+}
+
+function renderDoc() {
+  const el = document.getElementById('listaDoc');
+  if (!documentos.length) {
+    el.innerHTML = '<div class="empty-state"><p>Sin documentos registrados</p><p style="margin-top:6px;font-size:.82rem;">Agrega el SOAT, matrícula, revisión técnica...</p></div>';
+    return;
+  }
+  el.innerHTML = '<div class="docs-grid">' + documentos.map(d => {
+    const hoy  = new Date();
+    const vence = new Date(d.fecha_vencimiento + 'T12:00:00');
+    const dias  = Math.ceil((vence - hoy) / 86400000);
+    let cls, diasTxt, badgeCls;
+    if (dias < 0)       { cls = 'vencido'; diasTxt = `Vencido hace ${Math.abs(dias)}d`; badgeCls = 'badge-danger'; }
+    else if (dias <= 7) { cls = 'danger';  diasTxt = `Vence en ${dias}d ⚠️`;            badgeCls = 'badge-danger'; }
+    else if (dias <= 30){ cls = 'warn';    diasTxt = `Vence en ${dias}d`;               badgeCls = 'badge-warn';   }
+    else                { cls = 'ok';      diasTxt = `Vigente · ${dias}d`;              badgeCls = 'badge-ok';     }
+
+    return `
+      <div class="doc-card ${cls}">
+        <div class="doc-actions">
+          <button class="btn-icon" onclick="editarDoc(${d.id})" title="Editar" style="width:24px;height:24px;font-size:.75rem;">✏️</button>
+          <button class="btn-icon" onclick="eliminar('doc',${d.id})" title="Eliminar" style="width:24px;height:24px;font-size:.75rem;color:var(--red);">🗑️</button>
+        </div>
+        <div style="font-size:1.8rem;margin-bottom:6px;">${docIcon(d.tipo)}</div>
+        <div class="doc-tipo">${d.tipo}</div>
+        ${d.numero ? `<div style="font-size:.7rem;color:var(--slate);">#${d.numero}</div>` : ''}
+        <div class="doc-fecha">Vence: ${fmtFecha(d.fecha_vencimiento)}</div>
+        <span class="badge ${badgeCls}">${diasTxt}</span>
+        ${d.costo > 0 ? `<div style="font-size:.72rem;color:var(--slate);margin-top:4px;">$${parseFloat(d.costo).toFixed(2)}</div>` : ''}
+      </div>`;
+  }).join('') + '</div>';
+}
+
+function docIcon(tipo) {
+  if (tipo === 'SOAT') return '🛡️';
+  if (tipo === 'Matrícula') return '📋';
+  if (tipo === 'Revisión Técnica') return '🔍';
+  if (tipo === 'Seguro Todo Riesgo') return '🔒';
+  if (tipo === 'Permiso de Circulación') return '🚦';
+  if (tipo === 'Licencia de Conducir') return '🪪';
+  return '📄';
+}
+
+function limpiarFormDoc() {
+  ['dId','dNumero','dEmision','dNotas'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('dTipo').value        = 'SOAT';
+  document.getElementById('dVencimiento').value = '';
+  document.getElementById('dCosto').value       = '';
+  document.getElementById('modalDocTitulo').textContent = '📄 Nuevo Documento';
+}
+
+function editarDoc(id) {
+  const d = documentos.find(x => x.id === id);
+  if (!d) return;
+  document.getElementById('dId').value          = d.id;
+  document.getElementById('dTipo').value        = d.tipo;
+  document.getElementById('dNumero').value      = d.numero||'';
+  document.getElementById('dEmision').value     = d.fecha_emision||'';
+  document.getElementById('dVencimiento').value = d.fecha_vencimiento;
+  document.getElementById('dCosto').value       = d.costo||'';
+  document.getElementById('dNotas').value       = d.notas||'';
+  document.getElementById('modalDocTitulo').textContent = '✏️ Editar Documento';
+  abrirModal('modalDoc');
+}
+
+async function guardarDoc(e) {
+  e.preventDefault();
+  const id  = document.getElementById('dId').value;
+  const body = {
+    tipo:              document.getElementById('dTipo').value,
+    numero:            document.getElementById('dNumero').value,
+    fecha_emision:     document.getElementById('dEmision').value,
+    fecha_vencimiento: document.getElementById('dVencimiento').value,
+    costo:             document.getElementById('dCosto').value,
+    notas:             document.getElementById('dNotas').value,
+  };
+  const url = id ? `/api/vehiculos/${VID}/documentos/${id}` : `/api/vehiculos/${VID}/documentos`;
+  const r   = await fetch(url, { method: id ? 'PUT' : 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  if (r.ok) {
+    toast(id ? '✅ Documento actualizado' : '✅ Documento registrado', 'success');
+    cerrarModal('modalDoc'); limpiarFormDoc();
+    await cargarDoc();
+  } else toast('Error guardando', 'error');
+}
+
+/* ── ELIMINAR GENÉRICO ── */
+async function eliminar(tipo, id) {
+  const msgs = { mant:'este mantenimiento', rep:'esta reparación', fac:'esta factura', doc:'este documento' };
+  if (!confirm(`¿Eliminar ${msgs[tipo]}?`)) return;
+  const urls = {
+    mant: `/api/vehiculos/${VID}/mantenimientos/${id}`,
+    rep:  `/api/vehiculos/${VID}/reparaciones/${id}`,
+    fac:  `/api/vehiculos/${VID}/facturas/${id}`,
+    doc:  `/api/vehiculos/${VID}/documentos/${id}`,
+  };
+  const r = await fetch(urls[tipo], { method:'DELETE' });
+  if (r.ok) {
+    toast('🗑️ Eliminado', 'success');
+    if (tipo === 'mant') { await cargarMant(); await cargarVehiculo(); }
+    if (tipo === 'rep')  { await cargarRep(); await cargarVehiculo(); }
+    if (tipo === 'fac')  await cargarFac();
+    if (tipo === 'doc')  await cargarDoc();
+    renderResumen();
+  } else toast('Error eliminando', 'error');
+}
+
+/* ── Utils ── */
+function fmtFecha(f) {
+  if (!f) return '—';
+  const d = new Date(f + (f.includes('T') ? '' : 'T12:00:00'));
+  return d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+}
+</script>
+</body>
+</html>
