@@ -13,8 +13,8 @@ const PORT = process.env.PORT || 3001;
    Cambia PASSWORD por tu contraseña personal
 ────────────────────────────────────────── */
 const AUTH = {
-  PASSWORD:    '12345',  // ← CAMBIA ESTO
-  SESSION_H:   24,
+  PASSWORD:    'autocontrol2025',  // ← CAMBIA ESTO
+  SESSION_DAYS: 7,                 // Sesión dura 7 días
   COOKIE:      'ac_session',
 };
 
@@ -25,10 +25,19 @@ const sessions = new Map();
 
 function genToken()       { return crypto.randomBytes(48).toString('hex'); }
 function getCookie(req, n){ const c = (req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(n+'=')); return c ? c.slice(n.length+1) : null; }
-function validSession(req){ const t = getCookie(req, AUTH.COOKIE); if(!t||!sessions.has(t)) return false; const s=sessions.get(t); if(Date.now()>s.exp){sessions.delete(t);return false;} return true; }
+function validSession(req, res){ 
+  const t = getCookie(req, AUTH.COOKIE); 
+  if(!t||!sessions.has(t)) return false; 
+  const s=sessions.get(t); 
+  if(Date.now()>s.exp){sessions.delete(t);return false;}
+  // Auto-renovar sesión en cada petición (mantiene activo mientras se use)
+  s.exp = Date.now() + AUTH.SESSION_DAYS * 86400000;
+  if(res) res.setHeader('Set-Cookie', `${AUTH.COOKIE}=${t}; Path=/; Max-Age=${AUTH.SESSION_DAYS*86400}; HttpOnly; SameSite=Strict`);
+  return true; 
+}
 
 function requireAuth(req, res, next) {
-  if (validSession(req)) return next();
+  if (validSession(req, res)) return next();
   if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'No autenticado' });
   res.redirect('/login');
 }
@@ -153,7 +162,7 @@ const dbRun = (sql,p=[]) => new Promise((res,rej) => db.run(sql,p,function(e){e?
 ────────────────────────────────────────── */
 app.use(express.json());
 
-const PUBLIC_PATHS = ['/login', '/api/login', '/favicon.ico'];
+const PUBLIC_PATHS = ['/login', '/api/login', '/favicon.ico', '/manifest.json', '/sw.js'];
 app.use((req, res, next) => {
   if (PUBLIC_PATHS.includes(req.path) || req.path.match(/\.(css|js|png|jpg|jpeg|webp|ico|woff2?)$/)) return next();
   requireAuth(req, res, next);
@@ -173,8 +182,8 @@ app.post('/api/login', (req, res) => {
   if ((req.body.password||'') !== AUTH.PASSWORD)
     return res.status(401).json({ ok: false });
   const token = genToken();
-  sessions.set(token, { exp: Date.now() + AUTH.SESSION_H * 3600000 });
-  res.setHeader('Set-Cookie', `${AUTH.COOKIE}=${token}; Path=/; Max-Age=${AUTH.SESSION_H*3600}; HttpOnly; SameSite=Strict`);
+  sessions.set(token, { exp: Date.now() + AUTH.SESSION_DAYS * 86400000 });
+  res.setHeader('Set-Cookie', `${AUTH.COOKIE}=${token}; Path=/; Max-Age=${AUTH.SESSION_DAYS*86400}; HttpOnly; SameSite=Strict`);
   res.json({ ok: true });
 });
 
@@ -189,6 +198,8 @@ app.post('/api/logout', (req, res) => {
    PÁGINAS
 ────────────────────────────────────────── */
 app.get('/',           (_, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/manifest.json', (_, res) => res.sendFile(path.join(__dirname, 'public', 'manifest.json')));
+app.get('/sw.js',         (_, res) => res.sendFile(path.join(__dirname, 'public', 'sw.js')));
 app.get('/vehiculo',   (_, res) => res.sendFile(path.join(__dirname, 'public', 'vehiculo.html')));
 
 /* ──────────────────────────────────────────
