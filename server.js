@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3001;
    Cambia PASSWORD por tu contraseña personal
 ────────────────────────────────────────── */
 const AUTH = {
-  PASSWORD:    'autocontrol2025',  // ← CAMBIA ESTO
+  PASSWORD:    '12345',  // ← CAMBIA ESTO
   SESSION_DAYS: 7,                 // Sesión dura 7 días
   COOKIE:      'ac_session',
 };
@@ -476,6 +476,99 @@ app.get('/api/dashboard', async (_, res) => {
              ORDER BY m.proximo_fecha ASC LIMIT 5`)
     ]);
     res.json({ totales, gastoMes, docsVencer, proxMant });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+/* ──────────────────────────────────────────
+   REPORTE DE GASTOS POR VEHÍCULO
+────────────────────────────────────────── */
+
+// Reporte general: gasto de todos los vehículos
+app.get('/api/reporte/gastos', async (req, res) => {
+  const { anio } = req.query;
+  const filtroAnio = anio || new Date().getFullYear();
+  try {
+    const vehiculos = await dbAll(`SELECT id, apodo, marca, modelo, placa, foto FROM vehiculos ORDER BY apodo ASC`);
+
+    const resultado = await Promise.all(vehiculos.map(async v => {
+      const [mant, rep, fac, porMes] = await Promise.all([
+        // Gasto total mantenimientos del año
+        dbGet(`SELECT COALESCE(SUM(costo),0) as total, COUNT(*) as cant 
+               FROM mantenimientos WHERE vehiculo_id=? AND strftime('%Y',fecha)=?`,
+               [v.id, String(filtroAnio)]),
+        // Gasto total reparaciones del año
+        dbGet(`SELECT COALESCE(SUM(costo_final),0) as total, COUNT(*) as cant
+               FROM reparaciones WHERE vehiculo_id=? AND strftime('%Y',fecha_inicio)=?`,
+               [v.id, String(filtroAnio)]),
+        // Gasto total facturas del año
+        dbGet(`SELECT COALESCE(SUM(monto),0) as total, COUNT(*) as cant
+               FROM facturas WHERE vehiculo_id=? AND strftime('%Y',fecha)=?`,
+               [v.id, String(filtroAnio)]),
+        // Gasto por mes (todos los tipos combinados)
+        dbAll(`SELECT mes, SUM(total) as total FROM (
+                 SELECT strftime('%m',fecha) as mes, costo as total FROM mantenimientos 
+                 WHERE vehiculo_id=? AND strftime('%Y',fecha)=?
+                 UNION ALL
+                 SELECT strftime('%m',fecha_inicio) as mes, costo_final as total FROM reparaciones 
+                 WHERE vehiculo_id=? AND strftime('%Y',fecha_inicio)=?
+                 UNION ALL
+                 SELECT strftime('%m',fecha) as mes, monto as total FROM facturas 
+                 WHERE vehiculo_id=? AND strftime('%Y',fecha)=?
+               ) GROUP BY mes ORDER BY mes ASC`,
+               [v.id, String(filtroAnio), v.id, String(filtroAnio), v.id, String(filtroAnio)])
+      ]);
+
+      // Desglose por categoría de factura
+      const catFac = await dbAll(`SELECT categoria, COALESCE(SUM(monto),0) as total 
+                                  FROM facturas WHERE vehiculo_id=? AND strftime('%Y',fecha)=?
+                                  GROUP BY categoria ORDER BY total DESC`,
+                                  [v.id, String(filtroAnio)]);
+
+      return {
+        ...v,
+        gasto_mant:  parseFloat(mant.total||0),
+        gasto_rep:   parseFloat(rep.total||0),
+        gasto_fac:   parseFloat(fac.total||0),
+        gasto_total: parseFloat(mant.total||0) + parseFloat(rep.total||0) + parseFloat(fac.total||0),
+        cant_mant:   mant.cant || 0,
+        cant_rep:    rep.cant  || 0,
+        cant_fac:    fac.cant  || 0,
+        por_mes:     porMes,
+        cat_fac:     catFac,
+      };
+    }));
+
+    // Años disponibles para el selector
+    const aniosDisp = await dbAll(`SELECT DISTINCT strftime('%Y',fecha) as a FROM mantenimientos
+      UNION SELECT DISTINCT strftime('%Y',fecha_inicio) FROM reparaciones
+      UNION SELECT DISTINCT strftime('%Y',fecha) FROM facturas
+      ORDER BY a DESC`);
+
+    res.json({ vehiculos: resultado, anio: filtroAnio, anios: aniosDisp.map(x=>x.a).filter(Boolean) });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Reporte detallado de un vehículo: mes a mes
+app.get('/api/reporte/gastos/:id', async (req, res) => {
+  const { anio } = req.query;
+  const filtroAnio = anio || new Date().getFullYear();
+  try {
+    const v = await dbGet(`SELECT * FROM vehiculos WHERE id=?`, [req.params.id]);
+    if (!v) return res.status(404).json({ error: 'No encontrado' });
+
+    const [mants, reps, facs] = await Promise.all([
+      dbAll(`SELECT tipo, fecha, costo, taller FROM mantenimientos 
+             WHERE vehiculo_id=? AND strftime('%Y',fecha)=? ORDER BY fecha DESC`,
+             [req.params.id, String(filtroAnio)]),
+      dbAll(`SELECT descripcion, fecha_inicio as fecha, costo_final as costo, taller FROM reparaciones
+             WHERE vehiculo_id=? AND strftime('%Y',fecha_inicio)=? ORDER BY fecha_inicio DESC`,
+             [req.params.id, String(filtroAnio)]),
+      dbAll(`SELECT concepto, fecha, monto as costo, proveedor, categoria FROM facturas
+             WHERE vehiculo_id=? AND strftime('%Y',fecha)=? ORDER BY fecha DESC`,
+             [req.params.id, String(filtroAnio)])
+    ]);
+
+    res.json({ vehiculo: v, mants, reps, facs, anio: filtroAnio });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 

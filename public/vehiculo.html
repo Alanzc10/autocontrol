@@ -149,6 +149,57 @@
     .empty-state{text-align:center;padding:36px 20px;color:var(--slate)}
     .loading-spinner{width:30px;height:30px;border:3px solid #e2e8f0;border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:20px auto}
     @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Contador KM ── */
+    .km-counter-card{background:var(--white);border-radius:var(--radius);padding:18px;box-shadow:var(--card-sh);margin-bottom:14px}
+    .km-counter-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+    .km-item{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #f1f5f9}
+    .km-item:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+    .km-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+    .km-tipo{font-weight:700;font-size:.9rem}
+    .km-fecha{font-size:.72rem;color:var(--slate)}
+    .km-progress-wrap{position:relative;height:10px;background:#f1f5f9;border-radius:10px;overflow:hidden;margin-bottom:6px}
+    .km-progress-bar{height:100%;border-radius:10px;transition:width .6s ease;min-width:4px}
+    .km-progress-bar.ok{background:linear-gradient(90deg,var(--green),#34d399)}
+    .km-progress-bar.warn{background:linear-gradient(90deg,var(--gold),#fbbf24)}
+    .km-progress-bar.danger{background:linear-gradient(90deg,var(--red),#f87171)}
+    .km-numbers{display:flex;justify-content:space-between;font-size:.72rem;color:var(--slate)}
+    .km-numbers strong{color:var(--ink)}
+    .km-resto{font-size:.75rem;font-weight:600;text-align:right;margin-top:3px}
+    .km-resto.ok{color:var(--green)}
+    .km-resto.warn{color:var(--gold)}
+    .km-resto.danger{color:var(--red)}
+
+    /* ── Reporte Gastos ── */
+    .reporte-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+    .anio-selector{display:flex;gap:6px;flex-wrap:wrap}
+    .anio-chip{padding:5px 13px;border-radius:20px;border:2px solid #e2e8f0;background:var(--white);font-family:'Inter',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;color:var(--slate);transition:all .2s}
+    .anio-chip.active{background:var(--ink);border-color:var(--ink);color:#fff}
+
+    .gasto-total-banner{background:linear-gradient(135deg,var(--ink),var(--ink2));border-radius:var(--radius);padding:20px;color:#fff;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+    .gasto-banner-val{font-size:2rem;font-weight:800;color:var(--gold)}
+    .gasto-banner-lbl{font-size:.75rem;opacity:.6;text-transform:uppercase;letter-spacing:.5px}
+
+    .gastos-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+    .breakdown-card{background:var(--white);border-radius:12px;padding:14px;text-align:center;box-shadow:var(--card-sh);border-top:3px solid}
+    .breakdown-card.mant{border-top-color:var(--blue)}
+    .breakdown-card.rep{border-top-color:var(--orange)}
+    .breakdown-card.fac{border-top-color:var(--purple)}
+    .breakdown-val{font-size:1.2rem;font-weight:800;margin-bottom:2px}
+    .breakdown-lbl{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--slate)}
+
+    .meses-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px}
+    @media(max-width:480px){.meses-grid{grid-template-columns:repeat(4,1fr)}}
+    .mes-cell{background:var(--white);border-radius:8px;padding:8px 4px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .mes-nombre{font-size:.62rem;font-weight:600;color:var(--slate);text-transform:uppercase;margin-bottom:4px}
+    .mes-bar-wrap{height:36px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:4px}
+    .mes-bar{width:60%;border-radius:3px 3px 0 0;min-height:2px;background:linear-gradient(180deg,var(--blue),var(--blue-dk));transition:height .4s ease}
+    .mes-val{font-size:.65rem;font-weight:700;color:var(--ink)}
+    .mes-cell.activo .mes-bar{background:linear-gradient(180deg,var(--gold),var(--gold-dk))}
+
+    .detalle-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+    .dtab{padding:5px 12px;border-radius:20px;border:2px solid #e2e8f0;background:var(--white);font-family:'Inter',sans-serif;font-size:.74rem;font-weight:600;cursor:pointer;color:var(--slate);transition:all .2s}
+    .dtab.active{background:var(--blue);border-color:var(--blue);color:#fff}
   </style>
 </head>
 <body>
@@ -167,6 +218,7 @@
     <button class="tab-btn" data-tab="reparaciones">💥 Reparaciones</button>
     <button class="tab-btn" data-tab="facturas">🧾 Facturas</button>
     <button class="tab-btn" data-tab="documentos">📄 Documentos</button>
+    <button class="tab-btn" data-tab="reporte">📊 Reporte</button>
   </nav>
 </header>
 
@@ -178,6 +230,12 @@
     <div class="mstat"><div class="mstat-val c-blue"   id="rsMant">—</div><div class="mstat-lbl">Mantenimientos</div></div>
     <div class="mstat"><div class="mstat-val c-orange"  id="rsRep">—</div><div class="mstat-lbl">Reparaciones</div></div>
     <div class="mstat"><div class="mstat-val c-red"    id="rsGasto">—</div><div class="mstat-lbl">Gasto Total</div></div>
+  </div>
+
+  <!-- Contador KM -->
+  <div class="km-counter-card" id="kmCounterCard" style="display:none;">
+    <div class="km-counter-title">🛣️ Km desde último mantenimiento</div>
+    <div id="kmCounterList"></div>
   </div>
 
   <div class="card">
@@ -221,6 +279,57 @@
     <button class="btn btn-primary" onclick="abrirModal('modalDoc')">＋ Nuevo Documento</button>
   </div>
   <div id="listaDoc"><div class="loading-spinner"></div></div>
+</div>
+
+<!-- ═══════════════════════════ REPORTE ═══════════════════════════ -->
+<div id="tab-reporte" class="tab-panel">
+  <div class="reporte-header">
+    <div style="font-size:1rem;font-weight:800;">📊 Reporte de Gastos</div>
+    <div class="anio-selector" id="anioSelector"></div>
+  </div>
+
+  <div class="gasto-total-banner">
+    <div>
+      <div class="gasto-banner-lbl">Gasto total del año</div>
+      <div class="gasto-banner-val" id="rpGastoTotal">—</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="gasto-banner-lbl">Año</div>
+      <div style="font-size:1.4rem;font-weight:800;" id="rpAnioLabel">—</div>
+    </div>
+  </div>
+
+  <div class="gastos-breakdown">
+    <div class="breakdown-card mant">
+      <div class="breakdown-val c-blue" id="rpMant">—</div>
+      <div class="breakdown-lbl">🔧 Mantenimiento</div>
+    </div>
+    <div class="breakdown-card rep">
+      <div class="breakdown-val c-orange" id="rpRep">—</div>
+      <div class="breakdown-lbl">💥 Reparaciones</div>
+    </div>
+    <div class="breakdown-card fac">
+      <div class="breakdown-val c-purple" id="rpFac">—</div>
+      <div class="breakdown-lbl">🧾 Facturas</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px;">
+    <div class="section-title">📅 Gasto por Mes</div>
+    <div class="meses-grid" id="rpMesesGrid"></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <div class="section-title" style="margin-bottom:0;">📋 Detalle</div>
+      <div class="detalle-tabs">
+        <button class="dtab active" onclick="setDetalleTab('mant',this)">🔧 Mantenimiento</button>
+        <button class="dtab" onclick="setDetalleTab('rep',this)">💥 Reparaciones</button>
+        <button class="dtab" onclick="setDetalleTab('fac',this)">🧾 Facturas</button>
+      </div>
+    </div>
+    <div id="rpDetalle"></div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -484,6 +593,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      // Cargar reporte al entrar al tab
+      if (btn.dataset.tab === 'reporte' && !reporteData) cargarReporte(reporteAnio);
     });
   });
 
@@ -553,6 +664,9 @@ function renderResumen() {
   document.getElementById('rsMant').textContent  = mantenimientos.length;
   document.getElementById('rsRep').textContent   = reparaciones.length;
   document.getElementById('rsGasto').textContent = '$' + gastoTotal.toFixed(2);
+
+  // ── Contador de KM ──
+  renderKmCounter();
 
   // Últimos movimientos (mezcla de todo ordenado por fecha)
   const eventos = [
@@ -952,6 +1066,186 @@ async function eliminar(tipo, id) {
     if (tipo === 'doc')  await cargarDoc();
     renderResumen();
   } else toast('Error eliminando', 'error');
+}
+
+/* ══════════════════════════════════════════
+   CONTADOR DE KM
+══════════════════════════════════════════ */
+function renderKmCounter() {
+  // Encuentra mantenimientos que tienen próximo_km definido
+  const conProxKm = mantenimientos.filter(m => m.proximo_km && m.kilometraje);
+  const card = document.getElementById('kmCounterCard');
+  const list = document.getElementById('kmCounterList');
+
+  if (!conProxKm.length) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+
+  const kmActual = parseInt(vehiculo?.kilometraje || 0);
+
+  list.innerHTML = conProxKm.map(m => {
+    const kmInicio  = parseInt(m.kilometraje);
+    const kmProximo = parseInt(m.proximo_km);
+    const kmTotal   = kmProximo - kmInicio;   // rango total
+    const kmHecho   = Math.max(0, kmActual - kmInicio);  // km recorridos desde el mantenimiento
+    const kmFaltan  = Math.max(0, kmProximo - kmActual);
+    const pct       = Math.min(100, Math.round((kmHecho / kmTotal) * 100));
+
+    let cls, estado;
+    if (pct >= 100)     { cls = 'danger'; estado = '🔴 ¡Vencido! Ya superó el límite'; }
+    else if (pct >= 80) { cls = 'warn';   estado = `🟡 Faltan ${kmFaltan.toLocaleString()} km`; }
+    else                { cls = 'ok';     estado = `🟢 Faltan ${kmFaltan.toLocaleString()} km`; }
+
+    return `
+      <div class="km-item">
+        <div class="km-header">
+          <div>
+            <div class="km-tipo">🔧 ${m.tipo}</div>
+            <div class="km-fecha">Hecho el ${fmtFecha(m.fecha)} · ${m.taller||'Sin taller'}</div>
+          </div>
+          <div style="text-align:right;font-size:.78rem;font-weight:700;color:var(--ink);">
+            ${kmActual.toLocaleString()} km actuales
+          </div>
+        </div>
+        <div class="km-progress-wrap">
+          <div class="km-progress-bar ${cls}" style="width:${pct}%;"></div>
+        </div>
+        <div class="km-numbers">
+          <span>Hecho a: <strong>${kmInicio.toLocaleString()} km</strong></span>
+          <span style="color:${pct>=100?'var(--red)':pct>=80?'var(--gold)':'var(--slate)'};">
+            <strong>${pct}%</strong>
+          </span>
+          <span>Próximo: <strong>${kmProximo.toLocaleString()} km</strong></span>
+        </div>
+        <div class="km-resto ${cls}">${estado}</div>
+      </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════
+   REPORTE DE GASTOS
+══════════════════════════════════════════ */
+let reporteData   = null;
+let reporteAnio   = new Date().getFullYear();
+let detalleTabAct = 'mant';
+
+async function cargarReporte(anio) {
+  reporteAnio = anio || reporteAnio;
+  try {
+    const r = await fetch(`/api/reporte/gastos/${VID}?anio=${reporteAnio}`);
+    reporteData = await r.json();
+    renderReporte();
+  } catch(e) { console.error(e); }
+}
+
+function setDetalleTab(tipo, btn) {
+  detalleTabAct = tipo;
+  document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDetalleReporte();
+}
+
+function renderReporte() {
+  if (!reporteData) return;
+  const { mants, reps, facs, anio } = reporteData;
+
+  const totalMant = mants.reduce((s,m) => s + parseFloat(m.costo||0), 0);
+  const totalRep  = reps.reduce((s,r)  => s + parseFloat(r.costo||0), 0);
+  const totalFac  = facs.reduce((s,f)  => s + parseFloat(f.costo||0), 0);
+  const total     = totalMant + totalRep + totalFac;
+
+  document.getElementById('rpGastoTotal').textContent = '$' + total.toFixed(2);
+  document.getElementById('rpAnioLabel').textContent  = anio;
+  document.getElementById('rpMant').textContent = '$' + totalMant.toFixed(2);
+  document.getElementById('rpRep').textContent  = '$' + totalRep.toFixed(2);
+  document.getElementById('rpFac').textContent  = '$' + totalFac.toFixed(2);
+
+  // ── Gráfico de meses ──
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const mesActual = new Date().getMonth(); // 0-indexed
+  const datosPorMes = Array(12).fill(0);
+
+  // Sumar todo por mes
+  [...mants, ...reps, ...facs].forEach(item => {
+    const fecha = item.fecha;
+    if (!fecha) return;
+    const m = parseInt(fecha.slice(5,7)) - 1; // mes 0-indexed
+    datosPorMes[m] += parseFloat(item.costo||0);
+  });
+
+  const maxVal = Math.max(...datosPorMes, 1);
+  const mesGrid = document.getElementById('rpMesesGrid');
+  mesGrid.innerHTML = meses.map((mes, i) => {
+    const val     = datosPorMes[i];
+    const barPct  = Math.round((val / maxVal) * 100);
+    const esActual = (i === mesActual && String(anio) === String(new Date().getFullYear()));
+    return `
+      <div class="mes-cell ${esActual?'activo':''}">
+        <div class="mes-nombre">${mes}</div>
+        <div class="mes-bar-wrap">
+          <div class="mes-bar" style="height:${Math.max(barPct,val>0?8:2)}%;"></div>
+        </div>
+        <div class="mes-val">${val>0?'$'+val.toFixed(0):'—'}</div>
+      </div>`;
+  }).join('');
+
+  // Selector de años
+  const aniosEl = document.getElementById('anioSelector');
+  const anioActual = new Date().getFullYear();
+  const aniosDisp = [];
+  for (let y = anioActual; y >= anioActual - 4; y--) aniosDisp.push(y);
+  aniosEl.innerHTML = aniosDisp.map(y => `
+    <button class="anio-chip ${y == reporteAnio ? 'active' : ''}"
+            onclick="cargarReporte(${y})">${y}</button>`).join('');
+
+  renderDetalleReporte();
+}
+
+function renderDetalleReporte() {
+  if (!reporteData) return;
+  const { mants, reps, facs } = reporteData;
+  const el = document.getElementById('rpDetalle');
+
+  if (detalleTabAct === 'mant') {
+    if (!mants.length) { el.innerHTML = '<div class="empty-state" style="padding:16px;"><p>Sin mantenimientos este año</p></div>'; return; }
+    el.innerHTML = mants.map(m => `
+      <div class="reg-item">
+        <div class="reg-top">
+          <div>
+            <div class="reg-titulo">🔧 ${m.tipo}</div>
+            <div class="reg-sub">📅 ${fmtFecha(m.fecha)} ${m.taller?'· 🏪 '+m.taller:''}</div>
+          </div>
+          <div class="reg-monto">$${parseFloat(m.costo||0).toFixed(2)}</div>
+        </div>
+      </div>`).join('');
+  } else if (detalleTabAct === 'rep') {
+    if (!reps.length) { el.innerHTML = '<div class="empty-state" style="padding:16px;"><p>Sin reparaciones este año</p></div>'; return; }
+    el.innerHTML = reps.map(r => `
+      <div class="reg-item rep">
+        <div class="reg-top">
+          <div>
+            <div class="reg-titulo">💥 ${r.descripcion?.slice(0,55)||'—'}</div>
+            <div class="reg-sub">📅 ${fmtFecha(r.fecha)} ${r.taller?'· 🏪 '+r.taller:''}</div>
+          </div>
+          <div class="reg-monto">$${parseFloat(r.costo||0).toFixed(2)}</div>
+        </div>
+      </div>`).join('');
+  } else {
+    if (!facs.length) { el.innerHTML = '<div class="empty-state" style="padding:16px;"><p>Sin facturas este año</p></div>'; return; }
+    const catIcons = { repuesto:'🔩', mano_obra:'👨‍🔧', combustible:'⛽', seguro:'🛡️', impuesto:'📋', accesorio:'🎯', otro:'📦' };
+    el.innerHTML = facs.map(f => `
+      <div class="reg-item fac">
+        <div class="reg-top">
+          <div>
+            <div class="reg-titulo">${catIcons[f.categoria]||'📦'} ${f.concepto}</div>
+            <div class="reg-sub">📅 ${fmtFecha(f.fecha)} ${f.proveedor?'· 🏪 '+f.proveedor:''}</div>
+          </div>
+          <div class="reg-monto">$${parseFloat(f.costo||0).toFixed(2)}</div>
+        </div>
+      </div>`).join('');
+  }
 }
 
 /* ── Utils ── */
